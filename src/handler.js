@@ -2,7 +2,10 @@ const puppeteer = require("puppeteer");
 const fs = require("fs");
 
 async function extractVideoSrc(url) {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox"],
+  });
   const page = await browser.newPage();
   await page.goto(url);
   const videoElement = await page.$("video");
