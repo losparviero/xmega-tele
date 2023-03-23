@@ -150,7 +150,9 @@ bot.on("message::url", async (ctx) => {
       supports_streaming: true,
     });
   } else {
-    await ctx.reply("*Video is over 50MB.*");
+    await ctx.reply("*Video is over 50MB.*", {
+      reply_to_message_id: ctx.message.message_id,
+    });
   }
 
   await unlink(filePath);
