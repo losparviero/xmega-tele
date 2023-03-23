@@ -137,12 +137,6 @@ bot.on("message::url", async (ctx) => {
   console.log(filePath);
   console.log("Video downloaded");
 
-  const genThumbnail = require("simple-thumbnail");
-
-  genThumbnail(filePath, "thumb.jpg", "100%")
-    .then(() => console.log("done!"))
-    .catch((err) => console.error(err));
-
   const stat = util.promisify(fs.stat);
   const unlink = util.promisify(fs.unlink);
 
