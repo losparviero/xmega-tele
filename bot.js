@@ -12,10 +12,12 @@
 // Add env vars as a preliminary
 
 require("dotenv").config();
-const { Bot, session, GrammyError, HttpError } = require("grammy");
+const { Bot, session, InputFile, GrammyError, HttpError } = require("grammy");
 const { hydrateReply, parseMode } = require("@grammyjs/parse-mode");
 const { run, sequentialize } = require("@grammyjs/runner");
+
 const { hydrate } = require("@grammyjs/hydrate");
+const Downloader = require("nodejs-file-downloader");
 const { extractVideoSrc } = require("./src/handler");
 
 // Bot
@@ -115,15 +117,32 @@ bot.command("help", async (ctx) => {
 bot.on("message::url", async (ctx) => {
   const statusMessage = await ctx.reply("*Downloading*");
 
-  await extractVideoSrc(ctx.message.text).then(async (src) => {
-    if (src !== undefined) {
-      await ctx.replyWithHTML(src);
-      return;
+  const downloadLink = await extractVideoSrc(ctx.message.text).then(
+    async (src) => {
+      if (src !== undefined) {
+        await ctx.reply("Can't download video.");
+        return;
+      }
     }
-    await ctx.reply("Can't download video.");
+  );
+
+  const downloader = new Downloader({
+    url: downloadLink,
+    directory: "./",
+    onBeforeSave: (deducedName) => {
+      console.log(`The file name is: ${deducedName}`);
+    },
   });
 
-  await statusMessage.delete();
+  try {
+    await downloader.download();
+    console.log("Video downloaded");
+    await ctx.replyWithVideo(new InputFile(deducedName));
+  } catch (error) {
+    console.log("Download failed", error);
+  }
+
+  await await statusMessage.delete();
 });
 
 // Messages

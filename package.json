@@ -7,10 +7,10 @@
     "name": "Zubin",
     "email": "me@zubin.org.in",
     "url": "https://zubin.org.in"
-  },  
+  },
   "license": "AGPL-3.0",
   "scripts": {
-    "start": "node bot.js", 
+    "start": "node bot.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -20,6 +20,7 @@
     "dotenv": "^16.0.3",
     "fs": "0.0.1-security",
     "grammy": "^1.15.3",
+    "nodejs-file-downloader": "^4.10.6",
     "path": "^0.12.7",
     "puppeteer": "^19.7.5"
   },
