@@ -18,11 +18,12 @@
     "@grammyjs/parse-mode": "^1.6.0",
     "@grammyjs/runner": "^2.0.2",
     "dotenv": "^16.0.3",
-    "fs": "0.0.1-security",
+    "fs": "^0.0.1-security",
     "grammy": "^1.15.3",
     "nodejs-file-downloader": "^4.10.6",
     "path": "^0.12.7",
-    "puppeteer": "^19.7.5"
+    "puppeteer": "^19.7.5",
+    "util": "^0.12.5"
   },
   "devDependencies": {}
 }

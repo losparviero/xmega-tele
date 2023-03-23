@@ -15,10 +15,11 @@ require("dotenv").config();
 const { Bot, session, InputFile, GrammyError, HttpError } = require("grammy");
 const { hydrateReply, parseMode } = require("@grammyjs/parse-mode");
 const { run, sequentialize } = require("@grammyjs/runner");
-
 const { hydrate } = require("@grammyjs/hydrate");
 const Downloader = require("nodejs-file-downloader");
 const { extractVideoSrc } = require("./src/handler");
+const util = require("util");
+const fs = require("fs");
 
 // Bot
 
@@ -98,18 +99,18 @@ async function log(ctx, next) {
 
 bot.command("start", async (ctx) => {
   await ctx
-    .reply("*Welcome!* ✨\n_Send a xMegaDrive link._")
-    .then(console.log("New user added:\n", ctx.from))
-    .catch((e) => console.log(e));
+    .reply(
+      "*Welcome!* ✨\n_Send a xMegaDrive link.\nOnly videos less than 50MB are supported._"
+    )
+    .then(console.log("New user added:\n", ctx.from));
 });
 
 bot.command("help", async (ctx) => {
   await ctx
     .reply(
-      "*@anzubo Project.*\n\n_This is a chat bot using OpenAI's Chat API.\nAsk any query to get started!_"
+      "*@anzubo Project.*\n\n_This bot downloads videos from Xmegadrive.\nSend an Xmegadrive link to get started!_"
     )
-    .then(console.log("Help command sent to", ctx.chat.id))
-    .catch((e) => console.log(e));
+    .then(console.log("Help command sent to", ctx.chat.id));
 });
 
 // Download
@@ -117,14 +118,12 @@ bot.command("help", async (ctx) => {
 bot.on("message::url", async (ctx) => {
   const statusMessage = await ctx.reply("*Downloading*");
 
-  const downloadLink = await extractVideoSrc(ctx.message.text).then(
-    async (src) => {
-      if (src !== undefined) {
-        await ctx.reply("Can't download video.");
-        return;
-      }
-    }
-  );
+  const downloadLink = await extractVideoSrc(ctx.message.text);
+
+  if (downloadLink === undefined) {
+    await ctx.reply("*Can't download video.*");
+    return;
+  }
 
   const downloader = new Downloader({
     url: downloadLink,
@@ -134,15 +133,34 @@ bot.on("message::url", async (ctx) => {
     },
   });
 
-  try {
-    await downloader.download();
-    console.log("Video downloaded");
-    await ctx.replyWithVideo(new InputFile(deducedName));
-  } catch (error) {
-    console.log("Download failed", error);
+  const { filePath } = await downloader.download();
+  console.log(filePath);
+  console.log("Video downloaded");
+
+  const genThumbnail = require("simple-thumbnail");
+
+  genThumbnail(filePath, "thumb.jpg", "100%")
+    .then(() => console.log("done!"))
+    .catch((err) => console.error(err));
+
+  const stat = util.promisify(fs.stat);
+  const unlink = util.promisify(fs.unlink);
+
+  const stats = await stat(filePath);
+  const fileSizeInBytes = stats.size;
+  const size = fileSizeInBytes / (1024 * 1024);
+
+  if (size < 50) {
+    await ctx.replyWithVideo(new InputFile(filePath), {
+      reply_to_message_id: ctx.message.message_id,
+      supports_streaming: true,
+    });
+  } else {
+    await ctx.reply("*Video is over 50MB.*");
   }
 
-  await await statusMessage.delete();
+  await unlink(filePath);
+  await statusMessage.delete();
 });
 
 // Messages
